@@ -224,11 +224,6 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
 
-  // Open DevTools in development
-  if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools();
-  }
-
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

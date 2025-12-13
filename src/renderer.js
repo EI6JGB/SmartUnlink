@@ -122,13 +122,6 @@ function createRadioCard(radio) {
             ${escapeHtml(radio.callsign)}
           </span>
           ` : ''}
-          <span class="radio-card-detail">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            ${escapeHtml(radio.serialNumber)}
-          </span>
         </div>
       </div>
       <div class="radio-card-status">
@@ -209,7 +202,6 @@ function openEditModal(radio) {
   document.getElementById('radioName').value = radio.name;
   document.getElementById('radioIp').value = radio.ipAddress;
   document.getElementById('radioModel').value = radio.model;
-  document.getElementById('radioSerial').value = radio.serialNumber;
   document.getElementById('radioCallsign').value = radio.callsign || '';
   document.getElementById('radioVersion').value = radio.version || '4.1.3.39644';
 
@@ -248,7 +240,7 @@ async function handleRadioSubmit(e) {
     name: document.getElementById('radioName').value.trim(),
     ipAddress: document.getElementById('radioIp').value.trim(),
     model: document.getElementById('radioModel').value,
-    serialNumber: document.getElementById('radioSerial').value.trim(),
+    serialNumber: '0000-0000-0000-0000',
     callsign: document.getElementById('radioCallsign').value.trim().toUpperCase(),
     version: document.getElementById('radioVersion').value.trim() || '4.1.3.39644'
   };
