@@ -26,15 +26,34 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
-        uses: nick-fields/retry@v3
+      - name: Get Electron version
+        id: electron-version
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).devDependencies.electron
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Cache Electron binaries
+        uses: actions/cache@v4
         with:
-          timeout_minutes: 10
-          max_attempts: 3
-          command: npm ci
+          path: |
+            ~/AppData/Local/electron/Cache
+            ~/.cache/electron
+          key: electron-cache-${{ steps.electron-version.outputs.version }}
+          restore-keys: |
+            electron-cache-
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+          ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
       - name: Build Windows executables
         run: npx electron-builder --win --publish never
+        env:
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+          ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
