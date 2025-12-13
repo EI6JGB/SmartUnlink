@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const dgram = require('dgram');
+const os = require('os');
 const { v4: uuidv4 } = require('uuid');
 
 // Configuration
@@ -14,6 +15,25 @@ let mainWindow = null;
 let udpClient = null;
 let broadcastInterval = null;
 let packetCount = 0;
+
+// Get all broadcast addresses for local network interfaces
+function getBroadcastAddresses() {
+  const interfaces = os.networkInterfaces();
+  const broadcasts = [];
+
+  for (const [name, addrs] of Object.entries(interfaces)) {
+    for (const addr of addrs) {
+      if (addr.family === 'IPv4' && !addr.internal) {
+        // Calculate broadcast address from IP and netmask
+        const ip = addr.address.split('.').map(Number);
+        const mask = addr.netmask.split('.').map(Number);
+        const broadcast = ip.map((octet, i) => octet | (~mask[i] & 255)).join('.');
+        broadcasts.push({ interface: name, broadcast, address: addr.address });
+      }
+    }
+  }
+  return broadcasts;
+}
 
 // Config file path - use userData for installed app, local for development
 const getConfigPath = () => {
@@ -157,26 +177,34 @@ function startBroadcasting() {
 
   udpClient.bind(() => {
     udpClient.setBroadcast(true);
-    console.log('UDP broadcast enabled');
+    const broadcastAddresses = getBroadcastAddresses();
+    console.log('UDP broadcast enabled on interfaces:');
+    broadcastAddresses.forEach(({ interface: name, broadcast, address }) => {
+      console.log(`  ${name}: ${address} -> ${broadcast}`);
+    });
 
     broadcastInterval = setInterval(() => {
       const enabledRadios = config.radios.filter(r => r.enabled);
+      const broadcastAddresses = getBroadcastAddresses();
 
       enabledRadios.forEach(radio => {
         const packet = buildVita49DiscoveryPacket(radio);
 
-        // Send to port 4992 (SmartSDR command API)
-        udpClient.send(packet, 0, packet.length, 4992, '255.255.255.255', (err) => {
-          if (err) {
-            console.error(`Error broadcasting to 4992 for ${radio.name}:`, err);
-          }
-        });
+        // Send to each network interface's broadcast address
+        broadcastAddresses.forEach(({ broadcast, interface: ifaceName }) => {
+          // Send to port 4992 (SmartSDR command API)
+          udpClient.send(packet, 0, packet.length, 4992, broadcast, (err) => {
+            if (err) {
+              console.error(`Error broadcasting to ${broadcast}:4992 (${ifaceName}) for ${radio.name}:`, err);
+            }
+          });
 
-        // Send to port 4991 (VITA-49 streaming, for compatibility)
-        udpClient.send(packet, 0, packet.length, 4991, '255.255.255.255', (err) => {
-          if (err) {
-            console.error(`Error broadcasting to 4991 for ${radio.name}:`, err);
-          }
+          // Send to port 4991 (VITA-49 streaming, for compatibility)
+          udpClient.send(packet, 0, packet.length, 4991, broadcast, (err) => {
+            if (err) {
+              console.error(`Error broadcasting to ${broadcast}:4991 (${ifaceName}) for ${radio.name}:`, err);
+            }
+          });
         });
       });
 
@@ -184,7 +212,8 @@ function startBroadcasting() {
       if (mainWindow && enabledRadios.length > 0) {
         mainWindow.webContents.send('broadcast-tick', {
           timestamp: new Date().toISOString(),
-          radioCount: enabledRadios.length
+          radioCount: enabledRadios.length,
+          interfaceCount: broadcastAddresses.length
         });
       }
     }, config.broadcastIntervalMs || 3000);
