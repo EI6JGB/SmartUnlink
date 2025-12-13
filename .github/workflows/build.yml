@@ -9,6 +9,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -27,9 +30,7 @@ jobs:
         run: npm ci
 
       - name: Build Windows executables
-        run: npm run build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -37,7 +38,6 @@ jobs:
           name: SmartUnlink-Windows
           path: |
             dist/*.exe
-            dist/*.zip
           retention-days: 30
 
   release:
