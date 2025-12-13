@@ -247,7 +247,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false
     },
-    title: 'SmartUnlink - FlexRadio Discovery Proxy',
+    title: 'SmartUnlink by EI6LF - FlexRadio Discovery Proxy',
     backgroundColor: '#1a1a2e'
   });
 
