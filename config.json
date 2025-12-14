@@ -2,14 +2,14 @@
   "broadcastIntervalMs": 3000,
   "radios": [
     {
-      "name": "My 6600",
+      "name": "Aurora-520",
       "ipAddress": "192.168.100.99",
-      "model": "FLEX-8600",
+      "model": "Aurora-520",
       "serialNumber": "0000-0000-0000-0000",
-      "callsign": "EI0FU",
+      "callsign": "EI6LF",
       "version": "4.1.3.39644",
-      "enabled": true,
-      "id": "1985eaeb-8ad0-43a9-a5e4-69fd0bd3708a"
+      "id": "1985eaeb-8ad0-43a9-a5e4-69fd0bd3708a",
+      "enabled": false
     }
   ]
 }
